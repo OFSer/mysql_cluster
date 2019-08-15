@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: mysql-mha
+  name: mysql-volume-0
+  labels:
+    volume-type: mysql
+spec:
+  capacity:
+    storage: 10Gi 
+  accessModes:
+    - ReadWriteOnce
+  cephfs:
+    monitors:
+    - 10.0.200.101:6789
+    path: /data/mysqldb/mysql-0
+    user: admin
+    secretRef:
+      name: ceph-secret
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: mysql-mha
+  name: mysql-volume-1
+  labels:
+    volume-type: mysql
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  cephfs:
+    monitors:
+    - 10.0.200.101:6789
+    path: /data/mysqldb/mysql-1
+    user: admin
+    secretRef:
+      name: ceph-secret
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: mysql-mha
+  name: mysql-volume-2
+  labels:
+    volume-type: mysql
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  cephfs:
+    monitors:
+    - 10.0.200.101:6789
+    path: /data/mysqldb/mysql-2
+    user: admin
+    secretRef:
+      name: ceph-secret
+    readOnly: false
+
+
+#---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  namespace: mysql-mha
+#  name: mysql-pvc
+#spec:
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 10Gi

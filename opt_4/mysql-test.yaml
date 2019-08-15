@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mysql-test
+  name: mysql-test
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql-test-server
+          image: mysql:5.7
+          resources:
+            requests:
+              cpu: 1
+              memory: 256Mi
+            limits:
+              cpu: 2
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: Zefe2(MehfRefr
+          volumeMounts:
+            - name: cephfs
+              mountPath: /var/lib/mysql
+              subPath: k8s/mysql-test/mysql
+      volumes:
+        - name: cephfs
+          flexVolume:
+            driver: ceph.rook.io/rook
+            fsType: ceph
+            options:
+              fsName: myfs-ec
+              clusterNamespace: rook-ceph

@@ -1,0 +1,49 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  namespace: mysql-repl
+  name: mysql-slave
+spec:
+  serviceName: mysql-slave
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-slave
+  template:
+    metadata:
+      labels:
+        app: mysql-slave
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mysql-slave
+          image: shacowork/mysql57:s-5.7 
+          resources:
+            requests:
+              cpu: 1
+              memory: 256Mi
+            limits:
+              cpu: 2
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_MASTER_SERVICE_HOST
+              value: mysql-master
+            - name: MYSQL_ROOT_PASSWORD
+              value: 1234asdf
+            - name: MYSQL_REPLICATION_USER
+              value: repl_user
+            - name: MYSQL_REPLICATION_PASSWORD
+              value: 1q2w3e4r
+          volumeMounts:
+            - name: cephfs
+              mountPath: /var/lib/mysql
+              subPath: k8s/mysql-repl/mysql-slave
+      volumes:
+        - name: cephfs
+          flexVolume:
+            driver: ceph.rook.io/rook
+            fsType: ceph
+            options:
+              fsName: myfs-ec
+              clusterNamespace: rook-ceph

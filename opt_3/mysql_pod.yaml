@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: mysql
+  name: mysql
+  namespace: test
+spec:
+  replicas: 3 
+  serviceName: mysql
+  selector:
+       matchLabels:
+         app: mysql
+  template:
+       metadata:
+         labels:
+           app: mysql
+       spec:
+         initContainers:
+         - name: init-mysql
+           #image: mysql:5.7
+           image: shacowork/mgr:v0.1
+           command:
+           - bash
+           - "/mnt/conf/int-mysql.sh"
+           volumeMounts:
+             - name: config-volume
+               mountPath: /mnt/conf/
+               readOnly: true
+             - name: conf
+               mountPath: /etc/mysql/conf.d/
+             - name: mysql-data
+               mountPath: /var/lib/mysql/
+         containers:
+         - name: mysql
+           #image: mysql:5.7
+           image: shacowork/mgr:v0.1
+           resources:
+             limits:
+               cpu: "1"
+             requests:
+               memory: "1024Mi"
+           volumeMounts:
+             - name: conf
+               mountPath: /etc/mysql/conf.d/
+             - name: mysql-data
+               mountPath: /var/lib/mysql/
+               subPath: data
+           ports:
+             - containerPort: 3306
+               name: client
+             - containerPort: 31336
+           env:
+             - name: TZ
+               value: "Asia/Shanghai"
+             - name: MYSQL_ROOT_PASSWORD
+               value: "1234asdf"
+             - name: MYSQL_INITDB_SKIP_TZINFO
+               value: "1"
+             - name: POD_NAMESPACE
+               valueFrom:
+                 fieldRef:
+                   apiVersion: v1
+                   fieldPath: metadata.namespace
+         volumes:
+           - name: config-volume
+             configMap:
+               name: mysql-config
+           - name: conf
+             emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi

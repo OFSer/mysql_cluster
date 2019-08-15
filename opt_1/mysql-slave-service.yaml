@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: mysql-repl
+  name: mysql-slave
+  labels:
+    app: mysql-slave
+spec:
+  type: NodePort
+  ports:
+  - port: 3306
+    targetPort: 31706
+  selector:
+    app: mysql-slave

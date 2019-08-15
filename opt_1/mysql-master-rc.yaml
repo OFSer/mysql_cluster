@@ -1,0 +1,48 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  namespace: mysql-repl
+  name: mysql-master
+spec:
+  serviceName: mysql-master
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-master
+  template:
+    metadata:
+      labels:
+        app: mysql-master
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mysql-master
+          #image: shacowork/mysql57:m-5.7
+          image: shacowork/test:mysql5.7-test
+          resources:
+            requests:
+              cpu: 1
+              memory: 256Mi
+            limits:
+              cpu: 2
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: 1234asdf
+            - name: MYSQL_REPLICATION_USER
+              value: repl_user
+            - name: MYSQL_REPLICATION_PASSWORD
+              value: 1q2w3e4r
+          volumeMounts:
+            - name: cephfs
+              mountPath: /var/lib/mysql
+              subPath: k8s/mysql-repl/mysql-master
+      volumes:
+        - name: cephfs
+          flexVolume:
+            driver: ceph.rook.io/rook
+            fsType: ceph
+            options:
+              fsName: myfs-ec
+              clusterNamespace: rook-ceph

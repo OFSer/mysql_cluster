@@ -1,0 +1,48 @@
+apiVersion: v1
+data:
+  int-mysql.sh: |
+     set -ex
+     # Generate mysql server-id from pod ordinal index.
+     [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
+     ordinal=${BASH_REMATCH[1]}
+     echo [mysqld] > /etc/mysql/conf.d/server-id.cnf
+     # Add an offset to avoid reserved server-id=0 value.
+     echo server-id=$((100 + $ordinal)) >> /etc/mysql/conf.d/server-id.cnf
+     # Copy appropriate conf.d files from config-map to emptyDir.
+     #echo loose-group_replication_local_address=`hostname`.mysql:31336 >>/etc/mysql/conf.d/server-id.cnf
+     echo loose-group_replication_local_address=`hostname`.mysql.test.svc.cluster.local:31336 >>/etc/mysql/conf.d/server-id.cnf
+     #echo report_host=`hostname` >>/etc/mysql/conf.d/server-id.cnf
+     echo report_host=`hostname`.mysql.test.svc.cluster.local >>/etc/mysql/conf.d/server-id.cnf
+     cp /mnt/conf/mysql-conf.cnf /etc/mysql/conf.d/
+     #mkdir -p /var/lib/mysql/{data,tmp,blog,rlog,ulog}
+     chown -R mysql:mysql /var/lib/mysql
+  mysql-conf.cnf: |
+     [mysqld]
+     skip-host-cache
+     skip-name-resolve
+     gtid_mode=ON
+     enforce_gtid_consistency=ON
+     master_info_repository=TABLE
+     relay_log_info_repository=TABLE
+     binlog_checksum=NONE
+     log_slave_updates=ON
+     log_bin=binlog
+     binlog_format=ROW
+     transaction_write_set_extraction=XXHASH64
+     loose-group_replication_group_name="4ae9a331-bb30-11e9-8b2d-0a580af402df"
+     loose-group_replication_start_on_boot=off
+     loose-group_replication_bootstrap_group=off
+     loose-group_replication_single_primary_mode=off
+     loose-group_replication_enforce_update_everywhere_checks=on
+     loose-group_replication_ip_whitelist="10.0.0.0/8,10.244.0.0/16"
+     loose-group_replication_group_seeds="mysql-0.mysql.test.svc.cluster.local:31336,mysql-1.mysql.test.svc.cluster.local:31336,mysql-2.mysql.test.svc.cluster.local:31336"
+     #default_authentication_plugin=mysql_native_password
+
+     event_scheduler=ON
+     #************** basic ***************
+     datadir=/var/lib/mysql/data
+
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: test
